@@ -24,109 +24,62 @@ struct ContentView: View {
 
     var body: some View {
         NavigationView {
-            ZStack {
-                // Gradient background for the main screen
-                LinearGradient(
-                    gradient: Gradient(colors: [Color.blue.opacity(0.2), Color.white]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .edgesIgnoringSafeArea(.all)
-
-                VStack {
-                    // Displaying saved templates
-                    if !templates.isEmpty {
-                        ScrollView {
-                            ForEach(templates) { template in
-                                TemplateCardView(template: template)
-                                    .onTapGesture {
-                                        // Update text fields when selecting a template
-                                        customTitle = template.title
-                                        customContent = template.content
-                                        selectedTemplate = template
-                                    }
-                                    .contextMenu {
-                                        Button(role: .destructive) {
-                                            deleteTemplate(id: template.id)
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
-                                        }
-                                    }
+            VStack {
+                // Displaying templates
+                if !templates.isEmpty {
+                    List {
+                        ForEach(templates) { template in
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text(template.title)
+                                        .font(.headline)
+                                    Text(template.content)
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                            .padding(8) // Add padding for better visual alignment
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color(.systemGray6)) // Add a background card style
+                            )
+                            .onTapGesture {
+                                // On template selection, update text fields
+                                customTitle = template.title
+                                customContent = template.content
+                                selectedTemplate = template
                             }
                         }
-                        .padding(.horizontal)
-                    } else {
-                        // Placeholder for an empty state
-                        VStack {
-                            Image(systemName: "square.and.pencil")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 80, height: 80)
-                                .foregroundColor(.gray.opacity(0.5))
-                            Text("No templates available.")
-                                .foregroundColor(.gray)
-                                .font(.title3)
-                                .multilineTextAlignment(.center)
-                                .padding()
-                        }
+                        .onDelete(perform: deleteTemplate)
                     }
-
-                    Spacer()
-
-                    // Button to create a new template
-                    CustomButton(title: "Create New Template", gradient: Gradient(colors: [Color.green, Color.blue])) {
-                        if !customTitle.isEmpty || !customContent.isEmpty {
-                            showSaveTemplateAlert = true
-                        } else {
-                            showNewTemplateModal = true
-                        }
-                    }
-                    .padding(.horizontal)
-
-                    // Text fields for custom notification inputs
-                    VStack(alignment: .leading, spacing: 12) {
-                        CustomTextField(iconName: "text.cursor", placeholder: "Notification Title", text: $customTitle)
-                        CustomTextField(iconName: "doc.text", placeholder: "Notification Content", text: $customContent)
-                    }
-                    .padding()
-
-                    // Slider for scheduling delay
-                    VStack {
-                        Text("Delay: \(Int(delay)) seconds")
-                            .font(.headline)
-                        Slider(value: $delay, in: 1...60, step: 1)
-                            .accentColor(.blue)
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(LinearGradient(
-                                        gradient: Gradient(colors: [Color.blue.opacity(0.2), Color.white]),
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    ))
-                            )
-                            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 5)
-                    }
-                    .padding()
-
-                    // Button to send notification
-                    CustomButton(title: "Send Notification", gradient: Gradient(colors: [Color.blue, Color.purple])) {
-                        scheduleNotification(title: customTitle, body: customContent, delay: delay)
-                    }
-                    .padding(.horizontal)
+                    .listStyle(InsetGroupedListStyle())
+                } else {
+                    Text("No templates available.")
+                        .foregroundColor(.gray)
+                        .font(.subheadline)
+                        .bold()
                 }
-                .navigationTitle("SpawnMe! 2.0")
-                .navigationBarItems(
-                    leading: Button(action: {
-                        showSettings = true
-                    }) {
-                        Image(systemName: "gear")
-                            .imageScale(.large)
-                    },
-                    trailing: EditButton()
-                )
-                .sheet(isPresented: $showSettings) {
-                    SettingsView() // Link to an existing SettingsView file
+
+                // Button to create a new template
+                Button(action: {
+                    if !customTitle.isEmpty || !customContent.isEmpty {
+                        showSaveTemplateAlert = true
+                    } else {
+                        showNewTemplateModal = true
+                    }
+                }) {
+                    Text("Create New Template")
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(LinearGradient(
+                            gradient: Gradient(colors: [.green, .blue]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ))
+                        .cornerRadius(10)
+                        .shadow(radius: 4) // Add a shadow for depth
+                        .padding(.horizontal)
                 }
                 .alert(isPresented: $showSaveTemplateAlert) {
                     Alert(
@@ -143,14 +96,71 @@ struct ContentView: View {
                 .sheet(isPresented: $showNewTemplateModal) {
                     NewTemplateView(templates: $templates)
                 }
-                .onAppear {
-                    loadTemplates()
+
+                // Text fields
+                VStack(alignment: .leading, spacing: 12) {
+                    TextField("Notification Title", text: $customTitle)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
+                        .shadow(radius: 2)
+
+                    TextField("Notification Content", text: $customContent)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(10)
+                        .shadow(radius: 2)
                 }
+                .padding()
+
+                // Slider for delay
+                VStack {
+                    Text("Delay: \(Int(delay)) seconds")
+                        .font(.headline)
+                    Slider(value: $delay, in: 1...60, step: 1)
+                        .accentColor(.blue) // Customize slider color
+                }
+                .padding()
+
+                // Button to send notification
+                Button(action: {
+                    scheduleNotification(title: customTitle, body: customContent, delay: delay)
+                }) {
+                    Text("Send Notification")
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(LinearGradient(
+                            gradient: Gradient(colors: [.blue, .purple]),
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ))
+                        .cornerRadius(10)
+                        .shadow(radius: 4)
+                        .padding(.horizontal)
+                }
+            }
+            .navigationTitle("SpawnMe! 2.0")
+            .navigationBarItems(
+                leading: Button(action: {
+                    showSettings = true
+                }) {
+                    Image(systemName: "gear")
+                        .imageScale(.large)
+                        .foregroundColor(.blue) // Customize color for gear icon
+                },
+                trailing: EditButton()
+            )
+            .sheet(isPresented: $showSettings) {
+                SettingsView() // Reference to existing settings view
+            }
+            .onAppear {
+                loadTemplates()
             }
         }
     }
 
-    // Function to schedule a notification
+    // Function to schedule notification
     func scheduleNotification(title: String, body: String, delay: Double) {
         let center = UNUserNotificationCenter.current()
 
@@ -177,21 +187,11 @@ struct ContentView: View {
         }
     }
 
-    // Function to delete a template by ID
-    func deleteTemplate(id: Int) {
-        templates.removeAll { $0.id == id }
-        saveTemplates()
-    }
+    // Function to delete a template
+    func deleteTemplate(at offsets: IndexSet) {
+        templates.remove(atOffsets: offsets)
 
-    // Function to save the current template
-    func saveCurrentTemplate() {
-        let newTemplate = NotificationTemplate(id: (templates.last?.id ?? 0) + 1, title: customTitle, content: customContent)
-        templates.append(newTemplate)
-        saveTemplates()
-    }
-
-    // Function to save templates to UserDefaults
-    func saveTemplates() {
+        // Save templates back to UserDefaults
         do {
             let data = try JSONEncoder().encode(templates)
             UserDefaults.standard.set(data, forKey: templatesKey)
@@ -200,7 +200,21 @@ struct ContentView: View {
         }
     }
 
-    // Function to load templates from UserDefaults
+    // Function to save the current template
+    func saveCurrentTemplate() {
+        let newTemplate = NotificationTemplate(id: (templates.last?.id ?? 0) + 1, title: customTitle, content: customContent)
+        templates.append(newTemplate)
+
+        // Save templates to UserDefaults
+        do {
+            let data = try JSONEncoder().encode(templates)
+            UserDefaults.standard.set(data, forKey: templatesKey)
+        } catch {
+            print("Error saving templates: \(error.localizedDescription)")
+        }
+    }
+
+    // Load saved templates from UserDefaults
     func loadTemplates() {
         if let data = UserDefaults.standard.data(forKey: templatesKey) {
             do {
@@ -213,73 +227,46 @@ struct ContentView: View {
     }
 }
 
-// Reusable component for template cards
-struct TemplateCardView: View {
-    var template: NotificationTemplate
+// View for creating new templates
+struct NewTemplateView: View {
+    @Binding var templates: [NotificationTemplate]
+    @Environment(\.presentationMode) var presentationMode
+
+    @State private var title: String = ""
+    @State private var content: String = ""
 
     var body: some View {
-        VStack(alignment: .leading) {
-            Text(template.title)
-                .font(.headline)
-                .foregroundColor(.primary)
-            Text(template.content)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+        NavigationView {
+            Form {
+                TextField("Title", text: $title)
+                TextField("Content", text: $content)
+            }
+            .navigationTitle("New Template")
+            .navigationBarItems(
+                leading: Button("Cancel") {
+                    presentationMode.wrappedValue.dismiss()
+                },
+                trailing: Button("Save") {
+                    let newTemplate = NotificationTemplate(id: (templates.last?.id ?? 0) + 1, title: title, content: content)
+                    templates.append(newTemplate)
+
+                    // Save templates to UserDefaults
+                    do {
+                        let data = try JSONEncoder().encode(templates)
+                        UserDefaults.standard.set(data, forKey: "SavedTemplates")
+                    } catch {
+                        print("Error saving templates: \(error.localizedDescription)")
+                    }
+
+                    presentationMode.wrappedValue.dismiss()
+                }
+            )
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(LinearGradient(
-                    gradient: Gradient(colors: [Color.green.opacity(0.3), Color.white]),
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ))
-                .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 5)
-        )
     }
 }
 
-// Reusable component for custom text fields
-struct CustomTextField: View {
-    var iconName: String
-    var placeholder: String
-    @Binding var text: String
-
-    var body: some View {
-        HStack {
-            Image(systemName: iconName)
-                .foregroundColor(.gray)
-            TextField(placeholder, text: $text)
-                .padding(10)
-        }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(10)
-        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 4)
-    }
-}
-
-// Reusable component for custom gradient buttons
-struct CustomButton: View {
-    var title: String
-    var gradient: Gradient
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .foregroundColor(.white)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(
-                    LinearGradient(
-                        gradient: gradient,
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .cornerRadius(10)
-                .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 5)
-        }
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
     }
 }

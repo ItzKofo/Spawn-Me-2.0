@@ -1,3 +1,6 @@
+// SettingsView.swift
+// by @d7c3g6
+
 import SwiftUI
 import UIKit
 

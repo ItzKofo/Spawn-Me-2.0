@@ -63,6 +63,8 @@ Add new icon to `CFBundleAlternateIcons` section:
 
 ### 4. Update SettingsView.swift
 Add new icon to `iconOptions` list:
+
+
 let iconOptions = [
     AppIcon(name: "ig", displayName: "Instagram"),
     AppIcon(name: "rev", displayName: "Revolut"),
@@ -78,6 +80,8 @@ Let's add a Twitter icon:
    - twitter@3x.png (180x180)
 
 2. In Info.plist add:
+
+
 <key>twitter</key>
 <dict>
     <key>CFBundleIconFiles</key>
@@ -88,7 +92,9 @@ Let's add a Twitter icon:
     <false/>
 </dict>
 
-3. In SettingsView.swift add:
+4. In SettingsView.swift add:
+
+   
 let iconOptions = [
     AppIcon(name: "ig", displayName: "Instagram"),
     AppIcon(name: "rev", displayName: "Revolut"),

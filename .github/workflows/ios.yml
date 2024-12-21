@@ -1,4 +1,4 @@
-name: iOS starter workflow
+name: iOS Build and Test
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build and Test default scheme using any available iPhone simulator
+    name: Build and Test
     runs-on: macos-latest
 
     steps:
@@ -20,12 +20,15 @@ jobs:
         with:
           xcode-version: '15.2.0'
 
+      - name: List Schemes
+        run: |
+          xcodebuild -list -project *.xcodeproj
+
       - name: Build
         env:
-          scheme: "Spawn-Me-2.0"
+          scheme: "Spawn_Me_2_0"
           platform: "iOS Simulator"
         run: |
-          # xcrun xctrace returns via stderr, not the expected stdout
           device=`xcrun xctrace list devices 2>&1 | grep -oE 'iPhone.*?[^\(]+' | head -1 | awk '{$1=$1;print}' | sed -e "s/ Simulator$//"`
           if [ "`ls -A | grep -i \\.xcworkspace\$`" ]; then 
             filetype_parameter="workspace" 
@@ -45,7 +48,7 @@ jobs:
 
       - name: Test
         env:
-          scheme: "Spawn-Me-2.0"
+          scheme: "Spawn_Me_2_0"
           platform: "iOS Simulator"
         run: |
           device=`xcrun xctrace list devices 2>&1 | grep -oE 'iPhone.*?[^\(]+' | head -1 | awk '{$1=$1;print}' | sed -e "s/ Simulator$//"`
@@ -64,7 +67,7 @@ jobs:
 
       - name: Build IPA
         env:
-          scheme: "Spawn-Me-2.0"
+          scheme: "Spawn_Me_2_0"
         run: |
           xcodebuild -scheme "$scheme" \
             -archivePath $RUNNER_TEMP/SpawnMe.xcarchive \

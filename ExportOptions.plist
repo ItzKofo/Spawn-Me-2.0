@@ -4,14 +4,12 @@
 <dict>
     <key>method</key>
     <string>development</string>
-    <key>teamID</key>
-    <string>YOUR_TEAM_ID</string>
-    <key>signingStyle</key>
-    <string>manual</string>
+    <key>compileBitcode</key>
+    <false/>
     <key>provisioningProfiles</key>
     <dict>
-        <key>YOUR.BUNDLE.IDENTIFIER</key>
-        <string>YOUR_PROVISIONING_PROFILE_NAME</string>
+        <key>com.yourcompany.Spawn-Me-2-0</key>
+        <string>Spawn-Me-2.0 Development</string>
     </dict>
 </dict>
 </plist>

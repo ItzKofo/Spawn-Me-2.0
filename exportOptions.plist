@@ -4,12 +4,13 @@
 <dict>
     <key>method</key>
     <string>development</string>
+    <key>signingStyle</key>
+    <string>manual</string>
     <key>compileBitcode</key>
     <false/>
-    <key>provisioningProfiles</key>
-    <dict>
-        <key>com.yourcompany.Spawn-Me-2-0</key>
-        <string>Spawn-Me-2.0 Development</string>
-    </dict>
+    <key>stripSwiftSymbols</key>
+    <true/>
+    <key>thinning</key>
+    <string>&lt;none&gt;</string>
 </dict>
 </plist>

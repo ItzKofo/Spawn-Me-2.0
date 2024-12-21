@@ -1,6 +1,3 @@
-Here's a GitHub workflow for building an iOS app into an .ipa file. Create a new file `.github/workflows/ios.yml` with this content:
-
-```yaml
 name: iOS Build
 
 on:

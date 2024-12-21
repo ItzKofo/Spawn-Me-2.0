@@ -187,8 +187,7 @@ if isActive {
 
 ## Installation
 1. Clone this repository
-2. Open `SpawnMe2.xcodeproj` in Xcode
-3. Build and run the project
+2. Build and run the project
 
 ---
 

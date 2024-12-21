@@ -44,7 +44,6 @@ Recommendation: Icon should have a transparent background and be visually consis
 
 ### 3. Modify Info.plist
 Add new icon to `CFBundleAlternateIcons` section:
-
 <key>CFBundleIcons</key>
 <dict>
     <key>CFBundleAlternateIcons</key>
@@ -62,16 +61,13 @@ Add new icon to `CFBundleAlternateIcons` section:
     </dict>
 </dict>
 
-
-## 4. Update SettingsView.swift
+### 4. Update SettingsView.swift
 Add new icon to `iconOptions` list:
-
 let iconOptions = [
     AppIcon(name: "ig", displayName: "Instagram"),
     AppIcon(name: "rev", displayName: "Revolut"),
     AppIcon(name: "NEW_ICON_NAME", displayName: "DISPLAY_NAME") // New icon
 ]
-
 
 ### Example: Adding Twitter Icon
 Let's add a Twitter icon:
@@ -82,7 +78,6 @@ Let's add a Twitter icon:
    - twitter@3x.png (180x180)
 
 2. In Info.plist add:
-
 <key>twitter</key>
 <dict>
     <key>CFBundleIconFiles</key>
@@ -94,13 +89,11 @@ Let's add a Twitter icon:
 </dict>
 
 3. In SettingsView.swift add:
-
 let iconOptions = [
     AppIcon(name: "ig", displayName: "Instagram"),
     AppIcon(name: "rev", displayName: "Revolut"),
     AppIcon(name: "twitter", displayName: "Twitter")
 ]
-
 
 ### Important Notes:
 - File names must exactly match the names in code
@@ -118,3 +111,91 @@ For any issues, check:
 - File names and paths
 - Info.plist configuration
 - Image sizes and formats
+
+## How to Modify or Remove Launch Screen - Tutorial
+
+### Current Implementation
+The app currently uses `SplashScreenView` in `Main.swift` that displays an image for 2.5 seconds before showing the main content.
+
+### To Change the Launch Image:
+
+1. **Replace Image File**:
+   - Navigate to Assets.xcassets in your Xcode project
+   - Find the "image" asset
+   - Replace it with your new image
+   - Make sure the new image has the same name ("image") or update the code accordingly
+
+2. **Modify Image Name in Code**:
+Image(uiImage: UIImage(named: "YOUR_NEW_IMAGE_NAME") ?? UIImage())
+
+### To Remove Launch Screen:
+
+1. **Simple Removal**:
+   - Open `Main.swift`
+   - Replace the entire `SplashScreenView` with direct `ContentView`
+
+@main
+struct Main: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()  // Direct launch to main content
+        }
+    }
+}
+
+### To Modify Launch Duration:
+
+Change the delay time in the `onAppear` modifier:
+.onAppear {
+    DispatchQueue.main.asyncAfter(deadline: .now() + YOUR_DESIRED_TIME) {
+        withAnimation {
+            self.isActive = true
+        }
+    }
+}
+
+### Additional Customization Options:
+
+1. **Change Animation**:
+withAnimation(.easeIn) {  // or any other animation type
+    self.isActive = true
+}
+
+2. **Add Transition Effects**:
+if isActive {
+    ContentView()
+        .transition(.fade)  // or other transition types
+} else {
+    Image(uiImage: UIImage(named: "image") ?? UIImage())
+        .transition(.slide)
+}
+
+### Important Notes:
+- Clean and rebuild project after changes
+- Test on both simulator and real device
+- Ensure new images are properly added to asset catalog
+- Consider different screen sizes when changing images
+
+---
+
+## Requirements
+- iOS 15.0 or later
+- iPhone compatible
+- Xcode 13.0 or later for development
+
+---
+
+## Installation
+1. Clone this repository
+2. Open `SpawnMe2.xcodeproj` in Xcode
+3. Build and run the project
+
+---
+
+## License
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+## Contact
+For any questions or suggestions, please open an issue in this repository.

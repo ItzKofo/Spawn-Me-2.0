@@ -1,197 +1,166 @@
 // SettingsView.swift
-// by @d7c3g6
+// Created by @d7c3g6
 
-import SwiftUI
-import UIKit
+import SwiftUI 
 
+// MARK: - App Icon Model
+/// Model representing an alternative app icon
+struct AppIcon: Identifiable {
+    let id = UUID()                // Unique identifier for each icon
+    let name: String               // Internal name used for icon switching
+    let displayName: String        // User-friendly name shown in UI
+    let image: String              // Image asset name
+}
+
+// MARK: - Settings View
+/// View for managing app settings and icon customization
 struct SettingsView: View {
+    // MARK: - Properties
     
-    // A list of possible app icon options with internal names and display names
-    let iconOptions = [
-        AppIcon(name: "ig", displayName: "Instagram"), // Example: An Instagram-themed app icon
-        AppIcon(name: "rev", displayName: "Revolut")   // Example: A Revolut-themed app icon
+    // Persistent storage for current app icon
+    @AppStorage("appIcon") private var currentIcon: String = "AppIcon"
+    
+    // State variables for UI management
+    @State private var selectedIcon: String = "AppIcon"
+    @State private var showingConfirmation = false
+    @State private var iconToChange: AppIcon?
+    
+    // Available app icons
+    let appIcons: [AppIcon] = [
+        AppIcon(name: "AppIcon", displayName: "Default App Icon", image: "AppIcon"),
+        AppIcon(name: "ig", displayName: "Instagram", image: "ig"),
+        AppIcon(name: "rev", displayName: "Revolut", image: "rev"),
+        AppIcon(name: "settings", displayName: "Settings", image: "settings")
     ]
     
-    // Dictionary to map internal icon names to user-friendly display names
-    var iconNameMapping: [String: String] {
-        Dictionary(uniqueKeysWithValues: iconOptions.map { ($0.name, $0.displayName) })
+    // MARK: - Initialization
+    /// Sets up initial UI appearance and loads saved icon selection
+    init() {
+        UITableView.appearance().backgroundColor = .black
+        _selectedIcon = State(initialValue: UserDefaults.standard.string(forKey: "appIcon") ?? "AppIcon")
     }
     
-    // The currently selected app icon (nil indicates the default app icon)
-    var currentIcon: String? {
-        UIApplication.shared.alternateIconName
-    }
-    
+    // MARK: - Body
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 25) {
-                    
-                    // Section: Displaying the currently selected app icon
-                    VStack(spacing: 10) {
-                        Text("Current Icon")
-                            .font(.headline) // Section title
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        HStack(spacing: 15) {
-                            // Display the current app icon (if available)
-                            if let currentIcon = currentIcon, let image = UIImage(named: currentIcon) {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .frame(width: 50, height: 50) // Set the icon size
-                                    .cornerRadius(10) // Add rounded corners
-                            } else if let defaultImage = UIImage(named: "AppIcon") {
-                                // Display the default app icon (fallback)
-                                Image(uiImage: defaultImage)
-                                    .resizable()
-                                    .frame(width: 50, height: 50)
-                                    .cornerRadius(10)
-                            } else {
-                                // Placeholder for when no icon image is found
-                                Image(systemName: "app")
-                                    .font(.largeTitle)
-                                    .foregroundColor(.gray)
-                            }
-                            
-                            // Display the name of the current icon
-                            Text(currentIconDisplayName)
-                                .font(.title3)
-                                .fontWeight(.medium)
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color(UIColor.secondarySystemBackground)) // Light background for contrast
-                        .cornerRadius(10)
-                    }
-                    
-                    Divider() // Separator between sections
-                    
-                    // Section: Displaying options to choose a new app icon
-                    VStack(spacing: 15) {
-                        Text("Choose App Icon")
-                            .font(.headline) // Section title
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        // Loop through the icon options and show them as buttons
-                        ForEach(iconOptions) { icon in
-                            Button(action: {
-                                setAppIcon(to: icon.name) // Change app icon when the button is tapped
-                            }) {
-                                HStack {
-                                    // Display the icon image if available
-                                    if let image = UIImage(named: icon.name) {
-                                        Image(uiImage: image)
-                                            .resizable()
-                                            .frame(width: 50, height: 50)
-                                            .cornerRadius(10)
-                                    } else {
-                                        // Placeholder icon image
-                                        Image(systemName: "app")
-                                            .font(.title)
-                                            .foregroundColor(.gray)
-                                    }
-                                    
-                                    // Display the user-friendly name of the icon
-                                    Text(icon.displayName)
-                                        .font(.subheadline)
-                                        .foregroundColor(.primary)
-                                    
-                                    Spacer() // Push the next element (checkmark) to the right
-                                    
-                                    // Show a checkmark next to the currently selected icon
-                                    if currentIcon == icon.name || (currentIcon == nil && icon.name == "AppIcon") {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(.blue)
-                                    }
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color(UIColor.secondarySystemBackground)) // Icon button background
-                                .cornerRadius(10)
-                            }
-                        }
-                    }
-                    
-                    Divider() // Another separator
-                    
-                    // Section: Resetting to the default app icon
-                    VStack(spacing: 15) {
-                        Text("Reset Icon")
-                            .font(.headline) // Section title
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        Button(action: {
-                            resetAppIconToDefault() // Reset to the default icon when tapped
-                        }) {
+            List {
+                // MARK: - Icon Selection Section
+                Section(header: Text("Icon Settings")
+                    .foregroundColor(.white)) {
+                    ForEach(appIcons) { icon in
+                        VStack(spacing: 16) {
                             HStack {
-                                Text("Reset to Default Icon")
-                                    .foregroundColor(.white)
-                                    .fontWeight(.bold)
+                                // Icon preview image
+                                if let iconImage = UIImage(named: icon.image) {
+                                    Image(uiImage: iconImage)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 60, height: 60)
+                                        .cornerRadius(12)
+                                }
+                                
+                                // Icon information
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(icon.displayName)
+                                        .font(.headline)
+                                        .foregroundColor(.white)
+                                    Text(icon.name == "AppIcon" ? "Default Icon" : "Alternative Icon")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                }
+                                .padding(.leading, 10)
+                                
                                 Spacer()
-                                Image(systemName: "arrow.uturn.backward.circle.fill")
-                                    .foregroundColor(.white)
+                                
+                                // Selection indicator
+                                if icon.name == selectedIcon {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.blue)
+                                        .imageScale(.large)
+                                }
                             }
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.red) // Highlight this button in red
-                            .cornerRadius(10)
+                        }
+                        .padding(.vertical, 8)
+                        .listRowBackground(Color.black)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            iconToChange = icon
+                            showingConfirmation = true
                         }
                     }
                 }
-                .padding() // Add padding around the entire VStack
+                
+                // MARK: - About Section
+                Section(header: Text("About")
+                    .foregroundColor(.white)) {
+                    // Developer information
+                    HStack {
+                        Text("Coded by")
+                            .foregroundColor(.white)
+                        Spacer()
+                        Text("@d7c3g6")
+                            .foregroundColor(.gray)
+                    }
+                    .listRowBackground(Color.black)
+                    
+                    // Version information
+                    HStack {
+                        Text("Build Version")
+                            .foregroundColor(.white)
+                        Spacer()
+                        Text(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown")
+                            .foregroundColor(.gray)
+                    }
+                    .listRowBackground(Color.black)
+                    
+                    // Build type information
+                    HStack {
+                        Text("Build Type")
+                            .foregroundColor(.white)
+                        Spacer()
+                        Text("Private")
+                            .foregroundColor(.gray)
+                    }
+                    .listRowBackground(Color.black)
+                }
             }
-            .navigationTitle("Settings") // Set the title of the navigation bar
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .background(Color.black)
+        }
+        .preferredColorScheme(.dark)
+        // MARK: - Confirmation Alert
+        .alert(isPresented: $showingConfirmation) {
+            Alert(
+                title: Text("Change App Icon"),
+                message: Text("Do you want to change the app icon to \(iconToChange?.displayName ?? "")?"),
+                primaryButton: .default(Text("Yes")) {
+                    if let icon = iconToChange {
+                        setAppIcon(to: icon.name)
+                    }
+                },
+                secondaryButton: .cancel()
+            )
         }
     }
     
-    /// Retrieves the user-friendly name of the currently selected icon or "Default" if it's the default icon.
-    var currentIconDisplayName: String {
-        if let currentIcon = currentIcon {
-            // Use the iconNameMapping dictionary to find the display name
-            return iconNameMapping[currentIcon] ?? "Unknown Icon"
-        } else {
-            return "Default Icon"
-        }
-    }
-    
-    /// Changes the app's icon to the specified icon name.
-    /// - Parameter iconName: The internal name of the icon to switch to.
-    func setAppIcon(to iconName: String) {
-        UIApplication.shared.setAlternateIconName(iconName) { error in
+    // MARK: - Helper Methods
+    /// Changes the app icon to the selected alternative icon
+    /// - Parameter iconName: The name of the icon to switch to
+    private func setAppIcon(to iconName: String) {
+        selectedIcon = iconName
+        
+        UIApplication.shared.setAlternateIconName(iconName == "AppIcon" ? nil : iconName) { error in
             if let error = error {
-                // Log an error if the icon change fails
-                print("Error changing icon to '\(iconName)': \(error.localizedDescription)")
+                print("Error setting alternate icon \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.selectedIcon = self.currentIcon
+                }
             } else {
-                // Log success if the icon change is successful
-                print("Icon successfully changed to '\(iconName)'")
+                DispatchQueue.main.async {
+                    self.currentIcon = iconName
+                }
             }
         }
-    }
-    
-    /// Resets the app's icon to the default icon.
-    func resetAppIconToDefault() {
-        UIApplication.shared.setAlternateIconName(nil) { error in
-            if let error = error {
-                // Log an error if resetting the icon fails
-                print("Error resetting to default icon: \(error.localizedDescription)")
-            } else {
-                // Log success if the icon is reset to default
-                print("Icon successfully reset to default")
-            }
-        }
-    }
-}
-
-// A model representing app icon information
-struct AppIcon: Identifiable {
-    let id = UUID()           // Unique identifier for each icon
-    let name: String          // Internal name of the icon (used in Info.plist)
-    let displayName: String   // User-friendly display name for the icon
-}
-
-// Preview provider for SwiftUI previews
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsView()
     }
 }

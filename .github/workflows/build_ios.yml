@@ -3,26 +3,37 @@ name: Build SwiftUI IPA
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch:  # Umožňuje manuální spuštění
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest  # iOS buildy vyžadují macOS
+    runs-on: macos-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: ./your-fork-of-actions-checkout@v4  # If you forked actions/checkout
+        # OR use manual Git checkout:
+        # run: git clone https://github.com/ItzKofo/Spawn-Me-2.0.git . && git checkout $GITHUB_REF
 
       - name: Build IPA (Release)
         run: |
-          cd Spawn-Me-2.0  # Přejděte do složky s Xcode projektem (upravte podle vaší struktury)
-          xcodebuild -workspace SpawnMe.xcworkspace -scheme SpawnMe -configuration Release -archivePath build/SpawnMe.xcarchive archive
-          xcodebuild -exportArchive -archivePath build/SpawnMe.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build/Release -allowProvisioningUpdates
+          cd Spawn-Me-2.0  # Adjust path to your Xcode project
+          xcodebuild -workspace SpawnMe.xcworkspace -scheme SpawnMe -configuration Release \
+            -archivePath build/SpawnMe.xcarchive archive
+          xcodebuild -exportArchive -archivePath build/SpawnMe.xcarchive \
+            -exportOptionsPlist ExportOptions.plist -exportPath build/Release \
+            -allowProvisioningUpdates
         env:
-          TEAM_ID: ${{ secrets.TEAM_ID }}  # Vaše Apple Developer Team ID
+          TEAM_ID: ${{ secrets.TEAM_ID }}
 
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: SpawnMe.ipa
-          path: Spawn-Me-2.0/build/Release/SpawnMe.ipa  # Cesta k vygenerovanému .ipa souboru
+      - name: Upload IPA via GitHub API (Manual Alternative)
+        run: |
+          ZIP_FILE="SpawnMe_IPA_$(date +%Y%m%d).zip"
+          cd Spawn-Me-2.0/build/Release
+          zip -r ../../../$ZIP_FILE SpawnMe.ipa
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Content-Type: application/zip" \
+            --data-binary @../../../$ZIP_FILE \
+            "https://uploads.github.com/repos/ItzKofo/Spawn-Me-2.0/releases/$RELEASE_ID/assets?name=$ZIP_FILE"

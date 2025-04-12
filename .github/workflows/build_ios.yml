@@ -1,0 +1,28 @@
+name: Build SwiftUI IPA
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:  # Umožňuje manuální spuštění
+
+jobs:
+  build:
+    runs-on: macos-latest  # iOS buildy vyžadují macOS
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build IPA (Release)
+        run: |
+          cd Spawn-Me-2.0  # Přejděte do složky s Xcode projektem (upravte podle vaší struktury)
+          xcodebuild -workspace SpawnMe.xcworkspace -scheme SpawnMe -configuration Release -archivePath build/SpawnMe.xcarchive archive
+          xcodebuild -exportArchive -archivePath build/SpawnMe.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath build/Release -allowProvisioningUpdates
+        env:
+          TEAM_ID: ${{ secrets.TEAM_ID }}  # Vaše Apple Developer Team ID
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: SpawnMe.ipa
+          path: Spawn-Me-2.0/build/Release/SpawnMe.ipa  # Cesta k vygenerovanému .ipa souboru

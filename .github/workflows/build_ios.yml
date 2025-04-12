@@ -1,35 +1,52 @@
-name: Build IPA
-on: [push, workflow_dispatch]
+name: Build SwiftUI IPA
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
+
     steps:
-      - name: Checkout code (manual)
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Find Xcode project location
+        id: find-xcode
         run: |
-          git clone https://github.com/${{ github.repository }}.git .
-          git checkout ${{ github.ref }}
-          
+          # Search for .xcodeproj or .xcworkspace files
+          PROJECT_PATH=$(find . -name "*.xcodeproj" -o -name "*.xcworkspace" | head -n 1 | xargs dirname)
+          echo "PROJECT_PATH=${PROJECT_PATH}" >> $GITHUB_OUTPUT
+          echo "Found project at: ${PROJECT_PATH}"
+
       - name: Build IPA
         run: |
-          cd Spawn-Me-2.0
-          xcodebuild -workspace SpawnMe.xcworkspace \
-            -scheme SpawnMe \
+          cd "${{ steps.find-xcode.outputs.PROJECT_PATH }}"
+          xcodebuild -list # Verify project structure
+          
+          # Build commands (adjust scheme name as needed)
+          xcodebuild -workspace *.xcworkspace -scheme "SpawnMe" \
             -configuration Release \
             -archivePath build/SpawnMe.xcarchive \
             archive
+          
           xcodebuild -exportArchive \
             -archivePath build/SpawnMe.xcarchive \
             -exportOptionsPlist ExportOptions.plist \
             -exportPath build/Release \
             -allowProvisioningUpdates
-            
-      - name: Store IPA
+        env:
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+
+      - name: Prepare artifacts
         run: |
           mkdir -p artifacts
-          cp Spawn-Me-2.0/build/Release/SpawnMe.ipa artifacts/
-          
-      - name: Upload artifact (manual)
-        run: |
-          echo "IPA built at: Spawn-Me-2.0/build/Release/SpawnMe.ipa"
-          echo "Download from Actions artifacts tab"
+          cp "${{ steps.find-xcode.outputs.PROJECT_PATH }}/build/Release/SpawnMe.ipa" artifacts/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: SpawnMe.ipa
+          path: artifacts/SpawnMe.ipa

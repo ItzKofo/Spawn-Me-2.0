@@ -1,39 +1,35 @@
-name: Build SwiftUI IPA
-
-on:
-  push:
-    branches: [ "main" ]
-  workflow_dispatch:
+name: Build IPA
+on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: macos-latest
-
     steps:
-      - name: Checkout code
-        uses: ./your-fork-of-actions-checkout@v4  # If you forked actions/checkout
-        # OR use manual Git checkout:
-        # run: git clone https://github.com/ItzKofo/Spawn-Me-2.0.git . && git checkout $GITHUB_REF
-
-      - name: Build IPA (Release)
+      - name: Checkout code (manual)
         run: |
-          cd Spawn-Me-2.0  # Adjust path to your Xcode project
-          xcodebuild -workspace SpawnMe.xcworkspace -scheme SpawnMe -configuration Release \
-            -archivePath build/SpawnMe.xcarchive archive
-          xcodebuild -exportArchive -archivePath build/SpawnMe.xcarchive \
-            -exportOptionsPlist ExportOptions.plist -exportPath build/Release \
+          git clone https://github.com/${{ github.repository }}.git .
+          git checkout ${{ github.ref }}
+          
+      - name: Build IPA
+        run: |
+          cd Spawn-Me-2.0
+          xcodebuild -workspace SpawnMe.xcworkspace \
+            -scheme SpawnMe \
+            -configuration Release \
+            -archivePath build/SpawnMe.xcarchive \
+            archive
+          xcodebuild -exportArchive \
+            -archivePath build/SpawnMe.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/Release \
             -allowProvisioningUpdates
-        env:
-          TEAM_ID: ${{ secrets.TEAM_ID }}
-
-      - name: Upload IPA via GitHub API (Manual Alternative)
+            
+      - name: Store IPA
         run: |
-          ZIP_FILE="SpawnMe_IPA_$(date +%Y%m%d).zip"
-          cd Spawn-Me-2.0/build/Release
-          zip -r ../../../$ZIP_FILE SpawnMe.ipa
-          curl -X POST \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Content-Type: application/zip" \
-            --data-binary @../../../$ZIP_FILE \
-            "https://uploads.github.com/repos/ItzKofo/Spawn-Me-2.0/releases/$RELEASE_ID/assets?name=$ZIP_FILE"
+          mkdir -p artifacts
+          cp Spawn-Me-2.0/build/Release/SpawnMe.ipa artifacts/
+          
+      - name: Upload artifact (manual)
+        run: |
+          echo "IPA built at: Spawn-Me-2.0/build/Release/SpawnMe.ipa"
+          echo "Download from Actions artifacts tab"
